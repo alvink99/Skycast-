@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#08172d">
+<title>SkyCast — Weather at a glance</title>
+<style>
+:root{color-scheme:dark;--bg:#07172d;--panel:#143653;--panel2:#0b2945;--line:#456e8e;--cyan:#28c4df;--muted:#dce8f5;--white:#fff}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--white)}
+body{overflow:hidden}.app{height:100dvh;min-height:520px;padding:clamp(9px,1.4vw,20px);display:flex;flex-direction:column;gap:9px;background:radial-gradient(ellipse at 80% 0%,#194c70,var(--bg) 62%)}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:none}.brand{font-size:clamp(20px,2.3vw,31px);font-weight:900;letter-spacing:-1px}.sub,.muted{color:var(--muted)}.sub{font-size:10px;letter-spacing:2px}.clock{text-align:right;font-weight:800;font-size:clamp(18px,2vw,27px)}.clock small{display:block;font-size:11px;font-weight:500;color:var(--muted)}
+.card{background:linear-gradient(145deg,rgba(24,65,96,.97),rgba(15,43,68,.97));border:1px solid var(--line);border-radius:13px;padding:clamp(9px,1vw,14px);min-width:0;min-height:0}
+.hidden{display:none!important}.register{width:min(650px,94%);margin:auto}.register h1{text-align:center;font-size:clamp(18px,2vw,25px);margin:4px}.register p{text-align:center;font-size:12px;color:var(--muted)}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}label{font-size:12px;font-weight:700}input,select{width:100%;margin-top:4px;padding:9px;border-radius:8px;border:1px solid #7896b2;background:#09233d;color:white;font:inherit;font-size:13px}button{border:0;border-radius:8px;padding:9px 13px;background:var(--cyan);color:#06182b;font-weight:800;cursor:pointer}button.secondary{background:#254a68;color:white;border:1px solid #6384a0}a{color:#a4efff}.tiny{font-size:11px;color:var(--muted)}.welcome{font-size:clamp(17px,2vw,25px);font-weight:850}
+.toolbar{display:flex;align-items:center;gap:8px;flex:none;flex-wrap:wrap}.toolbar input{width:min(240px,32vw);margin:0}.toolbar .tiny{flex:1}
+.columns{display:grid;grid-template-columns:1.1fr .95fr .9fr;gap:9px;flex:1;min-height:0;overflow:auto}.stack{display:flex;flex-direction:column;gap:9px;min-height:0}.card h2{font-size:clamp(12px,1.15vw,16px);margin:0 0 8px}.hero-temp{font-size:clamp(29px,4vw,55px);font-weight:800;line-height:1}.hero-icon{font-size:clamp(28px,3.5vw,48px)}.days{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;align-content:start}.day{background:var(--panel2);border-radius:8px;padding:7px 2px;text-align:center;font-size:clamp(9px,.85vw,12px)}.day .ico{font-size:clamp(18px,2vw,26px);margin:6px 0}.alert{border-left:4px solid #41cf9a;padding:8px;background:#0d3044;border-radius:7px;font-size:12px}.hourly{display:flex;justify-content:space-between;gap:5px;text-align:center}.hourly div{background:var(--panel2);padding:7px 3px;border-radius:7px;flex:1;font-size:10px}.status{font-size:11px;color:var(--muted)}footer{font-size:10px;text-align:center;color:#cfdeeb;flex:none}
+@media(max-width:680px){body{overflow:auto}.app{height:auto;min-height:100dvh}.columns{grid-template-columns:1fr;overflow:visible}.formgrid{grid-template-columns:1fr}.toolbar input{width:100%}.toolbar{align-items:stretch}.toolbar button{flex:none}}
+@media(orientation:portrait) and (min-width:681px){body{overflow:auto}.app{height:auto;min-height:100dvh}.columns{grid-template-columns:1fr 1fr}.stack:last-child{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div><div class="brand">🌤️ SkyCast</div><div class="sub">YOUR WEATHER. YOUR WORLD.</div></div><div class="clock"><span id="clock">--:--:--</span><small id="clockplace">Local time</small></div></header>
+
+<section id="register" class="card register">
+ <div style="text-align:center;font-size:36px">🌍</div><h1>Welcome to SkyCast</h1><p>Create a preview profile to open your dashboard.</p>
+ <form id="profileForm">
+  <div class="formgrid">
+   <label>Full name<input id="fullName" maxlength="60" autocomplete="name" placeholder="Your name" required></label>
+   <label>Account username<input id="username" maxlength="24" autocomplete="nickname" placeholder="Choose a username" required></label>
+   <label>Age group<select id="ageGroup" required><option value="">Choose age group</option><option value="under5">Under 5</option><option value="5plus">5 or older</option></select></label>
+   <label>Date of birth<input id="dob" type="date"></label>
+  </div>
+  <p id="dobNote">Date of birth is required for ages 5 and over; optional under 5.</p>
+  <button type="submit" style="width:100%">Open my SkyCast dashboard →</button>
+ </form>
+ <p class="tiny">Demo profile only: details are not sent to a server or saved. Do not enter real personal information. This is not a secure account system.</p>
+</section>
+
+<section id="dashboard" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:0;gap:8px">
+ <div class="toolbar"><div><div class="welcome" id="greeting">Good morning!</div><div class="tiny">Your weather at a glance</div></div><div style="flex:1"></div><input id="place" value="London" aria-label="Search town or city"><button id="search">Find place</button><button class="secondary" id="change">Change account</button><span id="status" class="tiny">Ready</span></div>
+ <div class="columns">
+  <div class="stack">
+   <section class="card" style="flex:1">
+    <h2>📅 10-day forecast</h2><div class="days" id="days"></div><p class="tiny" id="forecastSource">Loading forecast…</p>
+   </section>
+   <section class="card" style="flex:1">
+    <h2>🕒 Hourly forecast</h2><div class="hourly" id="hours"></div>
+    <p class="tiny" id="sunTimes"></p>
+   </section>
+  </div>
+  <div class="stack">
+   <section class="card" style="flex:1">
+    <h2>🌡️ Right now</h2><div style="display:flex;align-items:center;gap:12px"><div class="hero-icon" id="nowIcon">🌤️</div><div><div class="hero-temp"><span id="temp">--</span>°</div><div id="condition" class="tiny">Getting conditions…</div></div></div>
+    <div class="tiny" style="margin-top:12px">Feels like <b id="feels">--°</b> · Humidity <b id="humidity">--%</b></div>
+    <div class="tiny" style="margin-top:5px">Wind <b id="wind">-- km/h</b> · Precipitation <b id="rain">-- mm</b></div>
+   </section>
+   <section class="card" style="flex:1">
+    <h2>⏳ When will the weather change?</h2><div id="changeWeather" class="muted" style="font-size:13px">Checking the next few hours…</div>
+    <p class="tiny" id="updated"></p>
+   </section>
+  </div>
+  <div class="stack">
+   <section class="card" style="flex:1">
+    <h2>🔔 Met Office warnings</h2><div class="alert" id="warnings">Open the official Met Office warning page for the latest warnings in your area.</div>
+    <p class="tiny" style="margin-top:9px"><a href="https://weather.metoffice.gov.uk/warnings-and-advice/uk-warnings" target="_blank" rel="noopener">Check official live warnings ↗</a></p>
+   </section>
+   <section class="card" style="flex:1">
+    <h2>🗺️ Weather at a glance</h2><div id="mapIcon" style="font-size:35px;text-align:center;padding:8px">🌦️</div>
+    <div class="tiny" id="placeLabel">London</div><div class="tiny" style="margin-top:6px">Powered by Open-Meteo forecast data. Met Office warnings linked separately.</div>
+   </section>
+  </div>
+ </div>
+</section>
+<footer>SkyCast · Forecast data: Open-Meteo · UK warnings: Met Office</footer>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+let selected={name:"London",lat:51.5072,lon:-0.1276,tz:"Europe/London"};
+let weatherRequest=null, placeRequest=null, requestNumber=0;
+const weatherCache=new Map();
+const wx={0:["☀️","Clear sky"],1:["🌤️","Mainly clear"],2:["⛅","Partly cloudy"],3:["☁️","Overcast"],45:["🌫️","Fog"],48:["🌫️","Depositing rime fog"],51:["🌦️","Light drizzle"],53:["🌦️","Drizzle"],55:["🌧️","Dense drizzle"],61:["🌧️","Light rain"],63:["🌧️","Rain"],65:["🌧️","Heavy rain"],71:["🌨️","Light snow"],73:["❄️","Snow"],75:["❄️","Heavy snow"],80:["🌦️","Rain showers"],81:["🌧️","Showers"],82:["⛈️","Heavy showers"],95:["⛈️","Thunderstorm"],96:["⛈️","Thunderstorm with hail"],99:["⛈️","Thunderstorm with hail"]};
+function codeInfo(c){return wx[c]||["🌤️","Variable conditions"]}
+function localClock(){try{$("clock").textContent=new Intl.DateTimeFormat("en-GB",{timeZone:selected.tz,hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(new Date());$("clockplace").textContent=selected.name+" · local time"}catch{$("clockplace").textContent="Local time unavailable"}}
+localClock();setInterval(localClock,1000);
+$("ageGroup").addEventListener("change",()=>{const req=$("ageGroup").value==="5plus";$("dob").required=req;$("dobNote").textContent=req?"Date of birth required for selected age group.":"Date of birth optional for under 5.";if(!req)$("dob").value=""});
+$("profileForm").addEventListener("submit",e=>{e.preventDefault();if(!$("profileForm").reportValidity())return;const n=$("fullName").value.trim();const h=Number(new Intl.DateTimeFormat("en-GB",{hour:"2-digit",hour12:false}).format(new Date()));$("greeting").textContent=(h<12?"Good morning":h<18?"Good afternoon":"Good evening")+", "+n.split(/\s+/)[0]+"!";$("register").classList.add("hidden");$("dashboard").classList.remove("hidden");loadWeather()});
+$("change").onclick=()=>{$("dashboard").classList.add("hidden");$("register").classList.remove("hidden")};
+async function findPlace(){const q=$("place").value.trim();if(!q)return;if(placeRequest)placeRequest.abort();placeRequest=new AbortController();$("status").textContent="Finding place…";try{const r=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(q)+"&count=1&language=en&format=json",{signal:placeRequest.signal});if(!r.ok)throw Error("Place search failed");const d=await r.json();if(!d.results?.length)throw Error("Place not found");const x=d.results[0];selected={name:[x.name,x.admin1,x.country].filter(Boolean).join(", "),lat:x.latitude,lon:x.longitude,tz:x.timezone||"UTC"};$("place").value=selected.name;localClock();await loadWeather()}catch(e){if(e.name!=="AbortError")$("status").textContent=e.message==="Place not found"?"Place not found. Try another spelling.":"Place search unavailable. Try again."}}
+$("search").addEventListener("click",findPlace);
+$("place").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();findPlace()}});
+function currentHourIndex(times,tz){const p=new Intl.DateTimeFormat("en-CA",{timeZone:tz,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"}).formatToParts(new Date());const v=Object.fromEntries(p.map(x=>[x.type,x.value]));const key=`${v.year}-${v.month}-${v.day}T${v.hour}`;let i=times.findIndex(t=>t.slice(0,13)>=key);return i<0?Math.max(0,times.length-4):i}
+function weekday(iso){const [y,m,d]=iso.split("-").map(Number);return ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][new Date(Date.UTC(y,m-1,d)).getUTCDay()]}
+function renderWeather(data){const c=data.current,info=codeInfo(c.weather_code);$("temp").textContent=Math.round(c.temperature_2m);$("nowIcon").textContent=info[0];$("condition").textContent=info[1];$("feels").textContent=Math.round(c.apparent_temperature)+"°";$("humidity").textContent=c.relative_humidity_2m+"%";$("wind").textContent=Math.round(c.wind_speed_10m)+" km/h";$("rain").textContent=Number(c.precipitation).toFixed(1)+" mm";
+const daily=data.daily;$("days").innerHTML=daily.time.map((d,i)=>{const a=codeInfo(daily.weather_code[i]);return `<div class="day"><b>${i===0?"Today":weekday(d)}</b><div class="ico">${a[0]}</div><div>${Math.round(daily.temperature_2m_max[i])}° / ${Math.round(daily.temperature_2m_min[i])}°</div><div class="tiny">${daily.precipitation_probability_max[i]??0}% rain</div></div>`}).join("");
+const hourly=data.hourly,idx=currentHourIndex(hourly.time,selected.tz),items=[0,1,2,3].map(k=>idx+k).filter(i=>i<hourly.time.length);$("hours").innerHTML=items.map(i=>`<div>${hourly.time[i].slice(11,16)}<div style="font-size:20px;margin:4px 0">${codeInfo(hourly.weather_code[i])[0]}</div><b>${Math.round(hourly.temperature_2m[i])}°</b><div class="tiny">${hourly.precipitation_probability[i]??0}% rain</div></div>`).join("");
+const upcoming=hourly.weather_code.slice(idx,idx+6),changeAt=upcoming.findIndex(x=>x!==c.weather_code);$("changeWeather").textContent=changeAt>0?`Conditions may change in about ${changeAt} hour${changeAt===1?"":"s"} to ${codeInfo(upcoming[changeAt])[1].toLowerCase()}.`:"No major change shown in the next few hours.";$("sunTimes").textContent="Sunrise "+(daily.sunrise[0]||"").slice(11,16)+" · Sunset "+(daily.sunset[0]||"").slice(11,16);$("forecastSource").textContent="10-day forecast · Open-Meteo";$("updated").textContent="Updated "+new Date().toLocaleTimeString("en-GB");$("placeLabel").textContent=selected.name;$("status").textContent="Live forecast loaded"}
+async function loadWeather(){const id=++requestNumber;if(weatherRequest)weatherRequest.abort();weatherRequest=new AbortController();const key=`${selected.lat.toFixed(3)},${selected.lon.toFixed(3)},${selected.tz}`;const cached=weatherCache.get(key);if(cached&&Date.now()-cached.time<300000){renderWeather(cached.data);$("status").textContent="Updated recently · cached forecast";return}
+$("status").textContent="Loading live forecast…";const u=`https://api.open-meteo.com/v1/forecast?latitude=${selected.lat}&longitude=${selected.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max&forecast_days=10&timezone=${encodeURIComponent(selected.tz)}`;try{const r=await fetch(u,{signal:weatherRequest.signal});if(!r.ok)throw Error("Forecast request failed");const data=await r.json();if(id!==requestNumber)return;weatherCache.set(key,{time:Date.now(),data});renderWeather(data)}catch(e){if(e.name!=="AbortError"&&id===requestNumber){$("status").textContent="Weather service unavailable · try again";$("forecastSource").textContent="Could not load the forecast. Check your connection and try again."}}}
+</script>
+</body></html>
