@@ -17,6 +17,28 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;fl
 .columns{display:grid;grid-template-columns:1.1fr .95fr .9fr;gap:9px;flex:1;min-height:0;overflow:auto}.stack{display:flex;flex-direction:column;gap:9px;min-height:0}.card h2{font-size:clamp(12px,1.15vw,16px);margin:0 0 8px}.hero-temp{font-size:clamp(29px,4vw,55px);font-weight:800;line-height:1}.hero-icon{font-size:clamp(28px,3.5vw,48px)}.days{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;align-content:start}.day{background:var(--panel2);border-radius:8px;padding:7px 2px;text-align:center;font-size:clamp(9px,.85vw,12px)}.day .ico{font-size:clamp(18px,2vw,26px);margin:6px 0}.alert{border-left:4px solid #41cf9a;padding:8px;background:#0d3044;border-radius:7px;font-size:12px}.hourly{display:flex;justify-content:space-between;gap:5px;text-align:center}.hourly div{background:var(--panel2);padding:7px 3px;border-radius:7px;flex:1;font-size:10px}.status{font-size:11px;color:var(--muted)}footer{font-size:10px;text-align:center;color:#cfdeeb;flex:none}
 @media(max-width:680px){body{overflow:auto}.app{height:auto;min-height:100dvh}.columns{grid-template-columns:1fr;overflow:visible}.formgrid{grid-template-columns:1fr}.toolbar input{width:100%}.toolbar{align-items:stretch}.toolbar button{flex:none}}
 @media(orientation:portrait) and (min-width:681px){body{overflow:auto}.app{height:auto;min-height:100dvh}.columns{grid-template-columns:1fr 1fr}.stack:last-child{grid-column:1/-1}}
+/* SKYCAST AUTOMATIC DAY AND NIGHT THEME */
+body.day {
+  background: #eaf4ff;
+  color: #172b45;
+}
+
+body.day .card,
+body.day .panel {
+  background: #ffffff;
+  color: #172b45;
+}
+
+body.night {
+  background: #071426;
+  color: #ffffff;
+}
+
+body.night .card,
+body.night .panel {
+  background: #10243d;
+  color: #ffffff;
+}
 </style>
 </head>
 <body>
@@ -98,5 +120,10 @@ const hourly=data.hourly,idx=currentHourIndex(hourly.time,selected.tz),items=[0,
 const upcoming=hourly.weather_code.slice(idx,idx+6),changeAt=upcoming.findIndex(x=>x!==c.weather_code);$("changeWeather").textContent=changeAt>0?`Conditions may change in about ${changeAt} hour${changeAt===1?"":"s"} to ${codeInfo(upcoming[changeAt])[1].toLowerCase()}.`:"No major change shown in the next few hours.";$("sunTimes").textContent="Sunrise "+(daily.sunrise[0]||"").slice(11,16)+" · Sunset "+(daily.sunset[0]||"").slice(11,16);$("forecastSource").textContent="10-day forecast · Open-Meteo";$("updated").textContent="Updated "+new Date().toLocaleTimeString("en-GB");$("placeLabel").textContent=selected.name;$("status").textContent="Live forecast loaded"}
 async function loadWeather(){const id=++requestNumber;if(weatherRequest)weatherRequest.abort();weatherRequest=new AbortController();const key=`${selected.lat.toFixed(3)},${selected.lon.toFixed(3)},${selected.tz}`;const cached=weatherCache.get(key);if(cached&&Date.now()-cached.time<300000){renderWeather(cached.data);$("status").textContent="Updated recently · cached forecast";return}
 $("status").textContent="Loading live forecast…";const u=`https://api.open-meteo.com/v1/forecast?latitude=${selected.lat}&longitude=${selected.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max&forecast_days=10&timezone=${encodeURIComponent(selected.tz)}`;try{const r=await fetch(u,{signal:weatherRequest.signal});if(!r.ok)throw Error("Forecast request failed");const data=await r.json();if(id!==requestNumber)return;weatherCache.set(key,{time:Date.now(),data});renderWeather(data)}catch(e){if(e.name!=="AbortError"&&id===requestNumber){$("status").textContent="Weather service unavailable · try again";$("forecastSource").textContent="Could not load the forecast. Check your connection and try again."}}}
+<script>
+function applySkyTheme(isDay) {
+  document.body.classList.toggle("day", isDay);
+  document.body.classList.toggle("night", !isDay);
+}
 </script>
 </body></html>
